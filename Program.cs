@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
+using WhiteListing_Backend.Models;
+using WhiteListing_Backend.Stores;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +10,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+//add identity types
+builder.Services.AddIdentity<ApplicationUser, ApplicationUserStore>();
+
+
+//Add identity services.
+builder.Services.AddTransient<IUserStore<ApplicationUser>>();
+
 
 var app = builder.Build();
 
