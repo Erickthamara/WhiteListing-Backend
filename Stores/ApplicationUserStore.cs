@@ -3,7 +3,7 @@ using WhiteListing_Backend.Models;
 
 namespace WhiteListing_Backend.Stores
 {
-    public class ApplicationUserStore : IUserStore<ApplicationUser>
+    public class ApplicationUserStore : IUserStore<ApplicationUser>, IUserPasswordStore<ApplicationUser>
 
     {
         public Task<IdentityResult> CreateAsync(ApplicationUser user, CancellationToken cancellationToken)
@@ -36,6 +36,11 @@ namespace WhiteListing_Backend.Stores
             throw new NotImplementedException();
         }
 
+        public Task<string?> GetPasswordHashAsync(ApplicationUser user, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<string> GetUserIdAsync(ApplicationUser user, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
@@ -46,7 +51,17 @@ namespace WhiteListing_Backend.Stores
             throw new NotImplementedException();
         }
 
+        public Task<bool> HasPasswordAsync(ApplicationUser user, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task SetNormalizedUserNameAsync(ApplicationUser user, string? normalizedName, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task SetPasswordHashAsync(ApplicationUser user, string? passwordHash, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
