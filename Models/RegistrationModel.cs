@@ -17,6 +17,6 @@ namespace WhiteListing_Backend.Models
         [Required(ErrorMessage = "Password is required.")]
         [MinLength(8, ErrorMessage = "Password must be at least 8 characters long.")]
         [RegularExpression(@"^(?=.*[!@#$%^&*(),.?""{}|<>]).+$", ErrorMessage = "Password must contain at least one special character.")]
-        required public string Password { get; set; }
+        public string Password { get; set; }
     }
 }
