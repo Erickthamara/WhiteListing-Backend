@@ -97,8 +97,11 @@ namespace WhiteListing_Backend.Stores
         {
             //cancellationToken.ThrowIfCancellationRequested();
             if (userName == null) throw new ArgumentNullException(nameof(userName));
+            //As identity nomalizes this username into uppercase
+            userName = userName.ToLowerInvariant();
 
             var response = await _supabase.From<SupabaseUserModel>().Where(M => M.UserName == userName).Get();
+            Console.WriteLine($"Response is {response}");
 
             var userModel = response.Models.FirstOrDefault();
 
@@ -180,6 +183,31 @@ namespace WhiteListing_Backend.Stores
         public Task<IdentityResult> UpdateAsync(ApplicationUser user, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<ApplicationUser?> FindByID_NOAsync(string Id_No, CancellationToken cancellationToken)
+        {
+            //cancellationToken.ThrowIfCancellationRequested();
+            //if (Id_No == null) throw new ArgumentNullException(nameof(userName));
+            if (Id_No == null) return null;
+
+            var response = await _supabase.From<SupabaseUserModel>().Where(M => M.IdNo == Id_No).Get();
+
+            var userModel = response.Models.FirstOrDefault();
+
+            if (userModel == null) return null;
+
+            // Map from SupabaseUserModel to ApplicationUser
+            return new ApplicationUser
+            {
+                Id = userModel.Id,
+                UserName = userModel.UserName,
+                Email = userModel.Email,
+                PasswordHash = userModel.PasswordHash,
+                NormalizedUserName = userModel.NormalizedUserName,
+                IdNo = userModel.IdNo
+
+            };
         }
     }
 }
