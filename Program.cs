@@ -2,6 +2,7 @@ using DotNetEnv;
 using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 using Supabase;
+using WhiteListing_Backend.Identity;
 using WhiteListing_Backend.Models;
 using WhiteListing_Backend.Stores;
 
@@ -33,6 +34,7 @@ builder.Services.AddHttpClient();
 
 //add identity types
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+    .AddUserManager<CustomUserManager>()
     .AddDefaultTokenProviders();
 
 
