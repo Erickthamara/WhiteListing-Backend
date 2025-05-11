@@ -30,5 +30,14 @@ namespace WhiteListing_Backend.Identity
 
             return null;
         }
+        public async Task<ApplicationUser?> FindByEmailAsync(string email)
+        {
+            if (Store is ApplicationUserStore customStore)
+            {
+                return await customStore.FindByEmailAsync(email, CancellationToken.None);
+            }
+
+            return null;
+        }
     }
 }

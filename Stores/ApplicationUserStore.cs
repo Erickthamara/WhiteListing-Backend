@@ -141,7 +141,7 @@ namespace WhiteListing_Backend.Stores
             return Task.FromResult(user.Id.ToString());
         }
 
-        public Task<string> GetUserNameAsync(ApplicationUser user, CancellationToken cancellationToken)
+        public Task<string?> GetUserNameAsync(ApplicationUser user, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (user == null) throw new ArgumentNullException(nameof(user));
@@ -192,6 +192,31 @@ namespace WhiteListing_Backend.Stores
             if (Id_No == null) return null;
 
             var response = await _supabase.From<SupabaseUserModel>().Where(M => M.IdNo == Id_No).Get();
+
+            var userModel = response.Models.FirstOrDefault();
+
+            if (userModel == null) return null;
+
+            // Map from SupabaseUserModel to ApplicationUser
+            return new ApplicationUser
+            {
+                Id = userModel.Id,
+                UserName = userModel.UserName,
+                Email = userModel.Email,
+                PasswordHash = userModel.PasswordHash,
+                NormalizedUserName = userModel.NormalizedUserName,
+                IdNo = userModel.IdNo
+
+            };
+        }
+
+        public async Task<ApplicationUser?> FindByEmailAsync(string email, CancellationToken cancellationToken)
+        {
+            //cancellationToken.ThrowIfCancellationRequested();
+            //if (Id_No == null) throw new ArgumentNullException(nameof(userName));
+            if (email == null) return null;
+
+            var response = await _supabase.From<SupabaseUserModel>().Where(M => M.Email == email).Get();
 
             var userModel = response.Models.FirstOrDefault();
 

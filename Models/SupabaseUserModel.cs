@@ -8,7 +8,7 @@ namespace WhiteListing_Backend.Models
     [Table("userstable")]
     public class SupabaseUserModel : BaseModel
     {
-        [PrimaryKey("Id", false)]
+        [PrimaryKey("id", false)]
         public virtual Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("username")]
@@ -29,5 +29,9 @@ namespace WhiteListing_Backend.Models
         public string Name { get; set; }
         [Column("Id_No")]
         public string IdNo { get; set; }
+        [Column("RefreshToken")]
+        public string? RefreshToken { get; set; }
+        [Column("RefreshTokenExpiryTime")]
+        public DateTime RefreshTokenExpiryTime { get; set; }
     }
 }

@@ -1,7 +1,11 @@
 using DotNetEnv;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Supabase;
+using System.Text;
+using TodoApi.Services;
 using WhiteListing_Backend.Identity;
 using WhiteListing_Backend.Models;
 using WhiteListing_Backend.Stores;
@@ -14,6 +18,9 @@ Env.Load();
 //Add env variables
 string supabaseUrl = Environment.GetEnvironmentVariable("SUPABASE_URL") ?? throw new ArgumentNullException("Supabse URL missing!");
 string supabaseKey = Environment.GetEnvironmentVariable("SUPABASE_KEY") ?? throw new ArgumentNullException("Supabse KEY missing!");
+string JWT_Issuer = Environment.GetEnvironmentVariable("JWT_Issuer") ?? throw new ArgumentNullException("JWT Issuer missing!");
+string JWT_Token = Environment.GetEnvironmentVariable("JWT_Token") ?? throw new ArgumentNullException("JWT Token missing!");
+string JWT_Audience = Environment.GetEnvironmentVariable("JWT_Audience") ?? throw new ArgumentNullException("JWT Audience missing!");
 
 // Add services to the container.
 builder.Services.AddScoped<Supabase.Client>(_ => new Supabase.Client(
@@ -25,6 +32,7 @@ builder.Services.AddScoped<Supabase.Client>(_ => new Supabase.Client(
          AutoConnectRealtime = true,
      }
     ));
+
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -45,6 +53,30 @@ builder.Services.AddScoped<IRoleStore<ApplicationRole>, ApplicationRoleStore>();
 
 
 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = JWT_Issuer,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidAudience = JWT_Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JWT_Token!)),
+            ValidateIssuerSigningKey = true,
+        };
+    });
+
+builder.Services.AddScoped<IJWTAuthservice, JWTAuthService>();
+
+
+
 
 var app = builder.Build();
 
@@ -56,6 +88,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+//app.UseAuthentication();
 
 app.UseAuthorization();
 

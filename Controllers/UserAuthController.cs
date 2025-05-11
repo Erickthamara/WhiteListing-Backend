@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using TodoApi.Models;
+using TodoApi.Services;
 using WhiteListing_Backend.Identity;
 using WhiteListing_Backend.Models;
 
@@ -14,14 +17,16 @@ namespace WhiteListing_Backend.Controllers
         private readonly CustomUserManager _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly Supabase.Client _supabase;
+        private readonly IJWTAuthservice _jwtAuthService;
         //private readonly ILogger _logger;
 
         public UserAuthController(CustomUserManager userManager,
-            SignInManager<ApplicationUser> signInManager, Supabase.Client supabase)
+            SignInManager<ApplicationUser> signInManager, Supabase.Client supabase, IJWTAuthservice jwtAuthService)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _supabase = supabase;
+            _jwtAuthService = jwtAuthService;
         }
 
 
@@ -54,7 +59,7 @@ namespace WhiteListing_Backend.Controllers
 
 
         [HttpPost("Login")]
-        public async Task<ActionResult> Login(LoginModel request)
+        public async Task<ActionResult<TokenResponseDto>> Login(LoginModel request)
         {
 
             // This doesn't count login failures towards account lockout
@@ -67,8 +72,9 @@ namespace WhiteListing_Backend.Controllers
             if (result.Succeeded)
             {
                 //_logger.LogInformation(1, "User logged in.");
-                //return RedirectToLocal(returnUrl);
-                return Ok("Success");
+                TokenResponseDto response = await _jwtAuthService.CreateTokenDuringLoginAsync(await _userManager.FindByEmailAsync(request.Email));
+
+                return Ok(response);
             }
             if (result.RequiresTwoFactor)
             {
@@ -87,37 +93,24 @@ namespace WhiteListing_Backend.Controllers
                 return BadRequest("Invalid login attempt.");
             }
         }
-        // GET: api/<UserAuthController>
-        [HttpGet]
-        public string Get()
+
+        //[HttpPost("LogOut")]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> Logout()
+        //{
+        //    await _signInManager.SignOutAsync();
+        //    return Ok("Logged out Successfully");
+        //    //_logger.LogInformation(4, "User logged out.");
+        //    //return RedirectToAction(nameof(HomeController.Index), "Home");
+        //}
+
+        [Authorize]
+        [HttpGet("AuthTest")]
+        public ActionResult<string> AuthTest()
         {
-            return "Hello World";
+            return Ok("You are authenticated");
         }
 
-        // GET api/<UserAuthController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/<UserAuthController>
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT api/<UserAuthController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<UserAuthController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
 
         protected virtual async Task<Microsoft.AspNetCore.Identity.SignInResult> PasswordSignInAsyncUsingIDNO(string idNo, string password,
         bool isPersistent, bool lockoutOnFailure)
