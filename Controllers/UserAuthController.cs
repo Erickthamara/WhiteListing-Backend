@@ -65,6 +65,14 @@ namespace WhiteListing_Backend.Controllers
             // This doesn't count login failures towards account lockout
             // To enable password failures to trigger account lockout, set lockoutOnFailure: true
             var result = await _signInManager.PasswordSignInAsync(request.Email, request.Password, isPersistent: false, lockoutOnFailure: false);
+
+
+            //==========================================Do not edit this line.=======================================================================================================
+            //NB :This is a really important line, it deletes the cookie that is created when the user logs in.
+            Response.Cookies.Delete(".AspNetCore.Identity.Application");
+            //==========================================Do not edit this line.=======================================================================================================
+
+
             if (result == null)
             {
                 return BadRequest("Invalid Username or Password.");
