@@ -41,7 +41,15 @@ builder.Services.AddOpenApi();
 builder.Services.AddHttpClient();
 
 //add identity types
-builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+{
+    //options.User.RequireUniqueEmail = true;
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 8;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = true;
+})
     .AddUserManager<CustomUserManager>()
     .AddDefaultTokenProviders();
 
@@ -53,12 +61,14 @@ builder.Services.AddScoped<IRoleStore<ApplicationRole>, ApplicationRoleStore>();
 
 
 
-builder.Services.AddAuthentication(options =>
+builder.Services.AddAuthentication(
+    options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-})
+    //options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}
+)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -77,7 +87,6 @@ builder.Services.AddScoped<IJWTAuthservice, JWTAuthService>();
 
 
 
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -92,6 +101,11 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 
 app.UseAuthorization();
+//app.Use(async (context, next) =>
+//{
+//    Console.WriteLine($"Incoming: {context.Request.Method} {context.Request.Path}");
+//    await next();
+//});
 
 app.MapControllers();
 
