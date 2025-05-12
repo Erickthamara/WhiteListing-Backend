@@ -102,6 +102,16 @@ namespace WhiteListing_Backend.Controllers
             }
         }
 
+
+        [HttpPost("refresh")]
+        public async Task<ActionResult<TokenResponseDto>> Refresh(RefreshTokenRequetsDTO request)
+        {
+            var response = await _jwtAuthService.RefreshTokensAsync(request);
+            if (response == null)
+                return BadRequest("Invalid Token");
+            return Ok(response);
+        }
+
         //[HttpPost("LogOut")]
         //[ValidateAntiForgeryToken]
         //public async Task<IActionResult> Logout()
