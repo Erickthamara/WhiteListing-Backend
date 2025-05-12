@@ -78,6 +78,8 @@ builder.Services.AddAuthentication(
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidAudience = JWT_Audience,
+            // The default for this is 5 minutes, so if you're using short-lived tokens, set this to zero
+            ClockSkew = TimeSpan.Zero, // <-- IMPORTANT
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JWT_Token!)),
             ValidateIssuerSigningKey = true,
         };
