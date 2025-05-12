@@ -45,20 +45,33 @@ namespace TodoApi.Services
 
         public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequetsDTO request)
         {
-            var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
-            ApplicationUser? userModel = new ApplicationUser
+            try
             {
-                Id = user.Id,
-                UserName = user.UserName,
-                Email = user.Email,
-                IdNo = user.IdNo,
-                //Role = user.Role
-            };
-            if (user is null)
-            {
-                return null;
+                var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
+
+                if (user == null)
+                {
+                    return null;  // Invalid token, no user found
+                }
+
+                // Proceed to create a new token if the user is found
+                ApplicationUser? userModel = new ApplicationUser
+                {
+                    Id = user.Id,
+                    UserName = user.UserName,
+                    Email = user.Email,
+                    IdNo = user.IdNo,
+                };
+
+                return await CreateTokens(userModel);
             }
-            return await CreateTokens(userModel);
+            catch (Exception ex)
+            {
+                // Log the exception for debugging purposes
+                //_logger.LogError($"Error in RefreshTokensAsync: {ex.Message}");
+
+                return null;  // Optionally, handle errors here as needed
+            }
         }
 
         private async Task<SupabaseUserModel?> ValidateRefreshTokenAsync(Guid userId, string refreshToken)
