@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TodoApi.Models;
 using TodoApi.Services;
 using WhiteListing_Backend.Identity;
@@ -102,7 +103,7 @@ namespace WhiteListing_Backend.Controllers
             }
         }
 
-
+        [Authorize]
         [HttpPost("refresh")]
         public async Task<ActionResult<TokenResponseDto>> Refresh(RefreshTokenRequetsDTO request)
         {
@@ -127,6 +128,21 @@ namespace WhiteListing_Backend.Controllers
         public ActionResult<string> AuthTest()
         {
             return Ok("You are authenticated");
+        }
+
+
+        [Authorize]
+        [HttpGet("Check")]
+        public ActionResult<string> CheckIfSignedIn()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return Ok(new { signedIn = true, userId });
+        }
+
+        [HttpGet("ApiHelloWorld")]
+        public string ApiHelloWorld()
+        {
+            return "Hello world";
         }
 
 
