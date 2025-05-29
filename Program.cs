@@ -95,7 +95,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: myAllowedOrigins,
        policy => policy.WithOrigins("http://localhost:5173")
        .WithMethods("PUT", "DELETE", "GET", "POST")
-        .WithHeaders("Content-Type", "application/json")); // Allow required headers);
+       .AllowAnyHeader());
+    //.WithHeaders("Content-Type", "application/json")); // Allow required headers);
 });
 
 
@@ -111,11 +112,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors(myAllowedOrigins);
 app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.UseCors(myAllowedOrigins);
 //app.Use(async (context, next) =>
 //{
 //    Console.WriteLine($"Incoming: {context.Request.Method} {context.Request.Path}");
