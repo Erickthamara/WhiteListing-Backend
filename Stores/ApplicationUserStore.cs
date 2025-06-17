@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using WhiteListing_Backend.Models;
+using WhiteListing_Backend.SupabaseModels;
 
 namespace WhiteListing_Backend.Stores
 {
@@ -101,7 +102,6 @@ namespace WhiteListing_Backend.Stores
             userName = userName.ToLowerInvariant();
 
             var response = await _supabase.From<SupabaseUserModel>().Where(M => M.UserName == userName).Get();
-            Console.WriteLine($"Response is {response}");
 
             var userModel = response.Models.FirstOrDefault();
 

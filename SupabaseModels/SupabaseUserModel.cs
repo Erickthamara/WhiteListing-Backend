@@ -3,7 +3,7 @@ using Supabase.Postgrest.Models;
 using ColumnAttribute = Supabase.Postgrest.Attributes.ColumnAttribute;
 using TableAttribute = Supabase.Postgrest.Attributes.TableAttribute;
 
-namespace WhiteListing_Backend.Models
+namespace WhiteListing_Backend.SupabaseModels
 {
     [Table("userstable")]
     public class SupabaseUserModel : BaseModel
@@ -18,7 +18,7 @@ namespace WhiteListing_Backend.Models
         [Column("emailconfirmed")]
         public virtual bool EmailConfirmed { get; set; }
         [Column("passwordhash")]
-        public virtual String PasswordHash { get; set; }
+        public virtual string PasswordHash { get; set; }
         [Column("normalizedusername")]
         public string NormalizedUserName { get; internal set; }
         [Column("authenticationtype")]

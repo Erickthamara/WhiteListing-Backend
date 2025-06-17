@@ -70,7 +70,7 @@ namespace WhiteListing_Backend.Controllers
 
             //==========================================Do not edit this line.=======================================================================================================
             //NB :This is a really important line, it deletes the cookie that is created when the user logs in.
-            Response.Cookies.Delete(".AspNetCore.Identity.Application");
+            //Response.Cookies.Delete(".AspNetCore.Identity.Application");
             //==========================================Do not edit this line.=======================================================================================================
 
 
@@ -81,7 +81,9 @@ namespace WhiteListing_Backend.Controllers
             if (result.Succeeded)
             {
                 //_logger.LogInformation(1, "User logged in.");
-                TokenResponseDto response = await _jwtAuthService.CreateTokenDuringLoginAsync(await _userManager.FindByEmailAsync(request.Email));
+
+                ApplicationUser user = await _userManager.FindByEmailAsync(request.Email);
+                TokenResponseDto response = await _jwtAuthService.CreateTokenDuringLoginAsync(user) ?? new TokenResponseDto { JWTToken = null, RefreshToken = null };
 
                 return Ok(response);
             }
@@ -132,10 +134,14 @@ namespace WhiteListing_Backend.Controllers
 
 
         [Authorize]
-        [HttpGet("Check")]
+        [HttpGet("CheckAuth")]
         public ActionResult<string> CheckIfSignedIn()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(new { signedIn = false });
+            }
             return Ok(new { signedIn = true, userId });
         }
 

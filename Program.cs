@@ -95,7 +95,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: myAllowedOrigins,
        policy => policy.WithOrigins("http://localhost:5173")
        .WithMethods("PUT", "DELETE", "GET", "POST")
-       .AllowAnyHeader());
+       .AllowAnyHeader()
+       .AllowCredentials());
     //.WithHeaders("Content-Type", "application/json")); // Allow required headers);
 });
 

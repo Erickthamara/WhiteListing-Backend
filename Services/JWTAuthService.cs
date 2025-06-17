@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using TodoApi.Models;
 using WhiteListing_Backend.Models;
+using WhiteListing_Backend.SupabaseModels;
 
 namespace TodoApi.Services
 {
