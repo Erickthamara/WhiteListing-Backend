@@ -60,7 +60,7 @@ namespace WhiteListing_Backend.Controllers
 
 
         [HttpPost("Login")]
-        public async Task<ActionResult<TokenResponseDto>> Login(LoginModel request)
+        public async Task<ActionResult<LoginResponse>> Login(LoginModel request)
         {
 
             // This doesn't count login failures towards account lockout
@@ -70,26 +70,28 @@ namespace WhiteListing_Backend.Controllers
 
             //==========================================Do not edit this line.=======================================================================================================
             //NB :This is a really important line, it deletes the cookie that is created when the user logs in.
-            //Response.Cookies.Delete(".AspNetCore.Identity.Application");
+            Response.Cookies.Delete(".AspNetCore.Identity.Application");
             //==========================================Do not edit this line.=======================================================================================================
 
 
-            if (result == null)
-            {
-                return BadRequest("Invalid Username or Password.");
-            }
+
             if (result.Succeeded)
             {
                 //_logger.LogInformation(1, "User logged in.");
 
                 ApplicationUser user = await _userManager.FindByEmailAsync(request.Email);
                 TokenResponseDto response = await _jwtAuthService.CreateTokenDuringLoginAsync(user) ?? new TokenResponseDto { JWTToken = null, RefreshToken = null };
-
-                return Ok(response);
+                LoginResponse loginResponse = new LoginResponse
+                {
+                    TokenResponse = response,
+                    email = user.Email,
+                    Client_Name = user.Email,
+                };
+                return Ok(loginResponse);
             }
             if (result.RequiresTwoFactor)
             {
-                //return RedirectToAction(nameof(SendCode), new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
+                // return RedirectToAction(nameof(SendCode), new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
             }
             if (result.IsLockedOut)
             {
@@ -101,7 +103,7 @@ namespace WhiteListing_Backend.Controllers
             {
                 //ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                 //return View(model);
-                return BadRequest("Invalid login attempt.");
+                return BadRequest("Inavlid Email or Password");
             }
         }
 
