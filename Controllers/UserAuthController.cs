@@ -149,7 +149,7 @@ namespace WhiteListing_Backend.Controllers
         [HttpGet("ApiHelloWorld")]
         public string ApiHelloWorld()
         {
-            return "Hello world";
+            return "Hello world,i am now live.";
         }
 
 
