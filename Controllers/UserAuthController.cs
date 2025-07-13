@@ -77,7 +77,6 @@ namespace WhiteListing_Backend.Controllers
 
             if (result.Succeeded)
             {
-                //_logger.LogInformation(1, "User logged in.");
 
                 ApplicationUser user = await _userManager.FindByEmailAsync(request.Email);
                 TokenResponseDto response = await _jwtAuthService.CreateTokenDuringLoginAsync(user) ?? new TokenResponseDto { JWTToken = null, RefreshToken = null };
