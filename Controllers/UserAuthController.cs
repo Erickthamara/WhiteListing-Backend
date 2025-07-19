@@ -143,6 +143,7 @@ namespace WhiteListing_Backend.Controllers
             {
                 return Unauthorized(new { signedIn = false });
             }
+
             return Ok(new { signedIn = true, userId });
         }
 
