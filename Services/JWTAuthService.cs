@@ -15,11 +15,17 @@ namespace TodoApi.Services
 
         private readonly Supabase.Client _supabase;
         private readonly IConfiguration _configuration;
+        private readonly string _jwtIssuer;
+        private readonly string _jwtAudience;
+        private readonly string _jwtKey;
 
         public JWTAuthService(IConfiguration configuration, Supabase.Client supabase)
         {
             _supabase = supabase;
             _configuration = configuration;
+            _jwtIssuer = Environment.GetEnvironmentVariable("JWT_Issuer")!;
+            _jwtAudience = Environment.GetEnvironmentVariable("JWT_Audience")!;
+            _jwtKey = Environment.GetEnvironmentVariable("JWT_Token")!;
         }
 
         //========================================LOGIN USER========================
@@ -44,19 +50,20 @@ namespace TodoApi.Services
 
 
 
-        public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequetsDTO request)
+        public async Task<TokenResponseDto?> RefreshTokensAsync(string refreshToken)
         {
             try
             {
-                var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
+                var userId = GetUserIdFromRefreshToken(refreshToken);
+                if (userId == null)
+                    return null;
 
+                // Now validate against Supabase
+                var user = await ValidateRefreshTokenAsync(userId.Value, refreshToken);
                 if (user == null)
-                {
-                    return null;  // Invalid token, no user found
-                }
+                    return null;
 
-                // Proceed to create a new token if the user is found
-                ApplicationUser? userModel = new ApplicationUser
+                var userModel = new ApplicationUser
                 {
                     Id = user.Id,
                     UserName = user.UserName,
@@ -128,15 +135,17 @@ namespace TodoApi.Services
                 new Claim(ClaimTypes.NameIdentifier,user.Id.ToString()),
                 //new Claim(ClaimTypes.Role,user.Role)
             };
+            var token = Environment.GetEnvironmentVariable("JWT_Token") ?? throw new ArgumentNullException("JWT Token missing!");
+            //Console.WriteLine($"JWT Token: {token}");
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetValue<string>("AppSettings:Token")!));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(token));
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
 
 
             var tokenDescriptor = new JwtSecurityToken(
-                issuer: _configuration.GetValue<string>("AppSettings:Issuer"),
-                audience: _configuration.GetValue<string>("AppSettings:Audience"),
+                issuer: Environment.GetEnvironmentVariable("JWT_Issuer") ?? throw new ArgumentNullException("JWT Issuer missing!"),
+                audience: Environment.GetEnvironmentVariable("JWT_Audience") ?? throw new ArgumentNullException("JWT Audience missing!"),
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(15),
                 signingCredentials: creds
@@ -144,6 +153,35 @@ namespace TodoApi.Services
 
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
         }
+
+        private Guid? GetUserIdFromRefreshToken(string token)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = false, // We're only extracting userId
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(_configuration.GetValue<string>(_jwtKey)!)
+                    )
+                }, out _);
+
+                var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (Guid.TryParse(userIdClaim, out var userId))
+                    return userId;
+
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
 
 
         //private Boolean CheckIfTokenIsExpired()
@@ -153,5 +191,10 @@ namespace TodoApi.Services
         //}
 
 
+
+
+
     }
+
+
 }

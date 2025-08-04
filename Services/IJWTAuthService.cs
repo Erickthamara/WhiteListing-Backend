@@ -7,6 +7,6 @@ namespace TodoApi.Services
     {
         //Task<User?> RegisterAsync(User request);
         Task<TokenResponseDto?> CreateTokenDuringLoginAsync(ApplicationUser request);
-        Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequetsDTO request);
+        Task<TokenResponseDto?> RefreshTokensAsync(string request);
     }
 }

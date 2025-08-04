@@ -16,6 +16,14 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 /// Load environment variables from .env file
 Env.Load();
+
+
+// ...
+
+//// Add this line where Env.Load() is called
+//DotEnv.Load();
+//DotEnv.Load();
+
 //Add env variables
 string supabaseUrl = Environment.GetEnvironmentVariable("SUPABASE_URL") ?? throw new ArgumentNullException("Supabse URL missing!");
 string supabaseKey = Environment.GetEnvironmentVariable("SUPABASE_KEY") ?? throw new ArgumentNullException("Supabse KEY missing!");
@@ -70,6 +78,11 @@ builder.Services.AddAuthentication(
     //options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 }
 )
+    //    .AddCookie(options =>
+    //{
+    //    options.Cookie.Name = "jwt_token"; // Name of the cookie to store JWT
+    //})
+
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -84,6 +97,20 @@ builder.Services.AddAuthentication(
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JWT_Token!)),
             ValidateIssuerSigningKey = true,
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var jwtCookie = context.Request.Cookies["jwt_token"];
+                Console.WriteLine("JWT from cookie: " + jwtCookie);
+                if (!string.IsNullOrEmpty(jwtCookie))
+                {
+                    context.Token = jwtCookie;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddScoped<IJWTAuthservice, JWTAuthService>();
@@ -93,7 +120,7 @@ var myAllowedOrigins = "_WhitelistingApp";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: myAllowedOrigins,
-       policy => policy.WithOrigins("https://au-whitelisting-demo.erickthamara.com")
+       policy => policy.WithOrigins("https://au-whitelisting-demo.erickthamara.com", "http://localhost:5173")
        .WithMethods("PUT", "DELETE", "GET", "POST")
        .AllowAnyHeader()
        .AllowCredentials());

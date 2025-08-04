@@ -80,12 +80,41 @@ namespace WhiteListing_Backend.Controllers
 
                 ApplicationUser user = await _userManager.FindByEmailAsync(request.Email);
                 TokenResponseDto response = await _jwtAuthService.CreateTokenDuringLoginAsync(user) ?? new TokenResponseDto { JWTToken = null, RefreshToken = null };
-                LoginResponse loginResponse = new LoginResponse
+                //LoginResponse loginResponse = new LoginResponse
+                //{
+                //    TokenResponse = response,
+                //    email = user.Email,
+                //    Client_Name = user.Email,
+                //};
+                // Set tokens as HttpOnly cookies
+                var jwtCookieOptions = new CookieOptions
                 {
-                    TokenResponse = response,
-                    email = user.Email,
-                    Client_Name = user.Email,
+                    HttpOnly = true,
+                    Secure = true, // set to true in production (HTTPS only)
+                    SameSite = SameSiteMode.None,
+                    IsEssential = true, // Make sure the cookie is sent even if the user hasn't consented to non-essential cookies
+                    Expires = DateTime.UtcNow.AddMinutes(15)
                 };
+
+                var refreshCookieOptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    IsEssential = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTime.UtcNow.AddDays(7)
+                };
+
+                Response.Cookies.Append("jwt_token", response.JWTToken ?? "", jwtCookieOptions);
+                Response.Cookies.Append("refresh_token", response.RefreshToken ?? "", refreshCookieOptions);
+
+                // Return only user data (not tokens)
+                var loginResponse = new
+                {
+                    email = user.Email,
+                    client_name = user.Email // Replace with actual client name if different
+                };
+
                 return Ok(loginResponse);
             }
             if (result.RequiresTwoFactor)
@@ -106,25 +135,75 @@ namespace WhiteListing_Backend.Controllers
             }
         }
 
-        [Authorize]
+        //[Authorize]
+        //[HttpPost("refresh")]
+        //public async Task<ActionResult<TokenResponseDto>> Refresh(RefreshTokenRequetsDTO request)
+        //{
+        //    var response = await _jwtAuthService.RefreshTokensAsync(request);
+        //    if (response == null)
+        //        return BadRequest("Invalid Token");
+        //    return Ok(response);
+        //}
+
+        [AllowAnonymous] // Remove [Authorize] so even expired sessions can call this
         [HttpPost("refresh")]
-        public async Task<ActionResult<TokenResponseDto>> Refresh(RefreshTokenRequetsDTO request)
+        public async Task<IActionResult> Refresh(RefreshTokenRequetsDTO request)
         {
-            var response = await _jwtAuthService.RefreshTokensAsync(request);
+            var refreshToken = Request.Cookies["refresh_token"];
+            if (string.IsNullOrEmpty(refreshToken))
+                return Unauthorized("No refresh token found");
+
+            // Validate the refresh token and get new tokens
+            if (string.IsNullOrEmpty(refreshToken))
+                return Unauthorized("Refresh");
+
+            var response = await _jwtAuthService.RefreshTokensAsync(refreshToken);
             if (response == null)
-                return BadRequest("Invalid Token");
-            return Ok(response);
+                return Unauthorized("Invalid or expired refresh token");
+
+            // Write new tokens to cookies
+            var accessOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTime.UtcNow.AddMinutes(15)
+            };
+
+            var refreshOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTime.UtcNow.AddDays(7)
+            };
+
+            Response.Cookies.Append("jwt_token", response.JWTToken!, accessOptions);
+            Response.Cookies.Append("refresh_token", response.RefreshToken!, refreshOptions);
+
+            return Ok(new { message = "Tokens refreshed" });
         }
 
-        //[HttpPost("LogOut")]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Logout()
-        //{
-        //    await _signInManager.SignOutAsync();
-        //    return Ok("Logged out Successfully");
-        //    //_logger.LogInformation(4, "User logged out.");
-        //    //return RedirectToAction(nameof(HomeController.Index), "Home");
-        //}
+
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTime.UtcNow.AddDays(-1) // Expire immediately
+            };
+
+            // Clear both JWT and Refresh Token cookies
+            Response.Cookies.Append("jwt_token", "", cookieOptions);
+            Response.Cookies.Append("refresh_token", "", cookieOptions);
+
+            return Ok(new { message = "Logged out successfully" });
+        }
+
 
         [Authorize]
         [HttpGet("AuthTest")]
@@ -138,6 +217,7 @@ namespace WhiteListing_Backend.Controllers
         [HttpGet("CheckAuth")]
         public ActionResult<string> CheckIfSignedIn()
         {
+            Console.WriteLine("hit");
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
