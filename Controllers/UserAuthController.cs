@@ -19,15 +19,16 @@ namespace WhiteListing_Backend.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly Supabase.Client _supabase;
         private readonly IJWTAuthservice _jwtAuthService;
-        //private readonly ILogger _logger;
+        private readonly ILogger<UserAuthController> _logger;
 
         public UserAuthController(CustomUserManager userManager,
-            SignInManager<ApplicationUser> signInManager, Supabase.Client supabase, IJWTAuthservice jwtAuthService)
+            SignInManager<ApplicationUser> signInManager, Supabase.Client supabase, IJWTAuthservice jwtAuthService, ILogger<UserAuthController> logger)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _supabase = supabase;
             _jwtAuthService = jwtAuthService;
+            _logger = logger;
         }
 
 
@@ -62,11 +63,17 @@ namespace WhiteListing_Backend.Controllers
         [HttpPost("Login")]
         public async Task<ActionResult<LoginResponse>> Login(LoginModel request)
         {
+            _logger.LogInformation("Login attempt for email: {Email}", request.Email);
 
+            // Check incoming cookies
+            var incomingCookies = string.Join(", ", Request.Cookies.Select(c => $"{c.Key}={c.Value}"));
+            _logger.LogInformation("Incoming cookies: {Cookies}", incomingCookies);
             // This doesn't count login failures towards account lockout
             // To enable password failures to trigger account lockout, set lockoutOnFailure: true
             var result = await _signInManager.PasswordSignInAsync(request.Email, request.Password, isPersistent: false, lockoutOnFailure: false);
 
+            _logger.LogInformation("SignIn result: Succeeded={Succeeded}, RequiresTwoFactor={RequiresTwoFactor}, IsLockedOut={IsLockedOut}",
+        result.Succeeded, result.RequiresTwoFactor, result.IsLockedOut);
 
             //==========================================Do not edit this line.=======================================================================================================
             //NB :This is a really important line, it deletes the cookie that is created when the user logs in.
@@ -80,12 +87,11 @@ namespace WhiteListing_Backend.Controllers
 
                 ApplicationUser user = await _userManager.FindByEmailAsync(request.Email);
                 TokenResponseDto response = await _jwtAuthService.CreateTokenDuringLoginAsync(user) ?? new TokenResponseDto { JWTToken = null, RefreshToken = null };
-                //LoginResponse loginResponse = new LoginResponse
-                //{
-                //    TokenResponse = response,
-                //    email = user.Email,
-                //    Client_Name = user.Email,
-                //};
+
+                _logger.LogInformation("JWT Token generated: {HasJwt}, RefreshToken generated: {HasRefresh}",
+                    !string.IsNullOrEmpty(response.JWTToken),
+                    !string.IsNullOrEmpty(response.RefreshToken));
+
                 // Set tokens as HttpOnly cookies
                 var jwtCookieOptions = new CookieOptions
                 {
@@ -93,7 +99,7 @@ namespace WhiteListing_Backend.Controllers
                     Secure = true, // set to true in production (HTTPS only)
                     SameSite = SameSiteMode.None,
                     IsEssential = true, // Make sure the cookie is sent even if the user hasn't consented to non-essential cookies
-                    Domain = ".erickthamara.com",
+                    //Domain = ".erickthamara.com",
                     Expires = DateTime.UtcNow.AddMinutes(15)
                 };
 
@@ -103,12 +109,14 @@ namespace WhiteListing_Backend.Controllers
                     Secure = true,
                     IsEssential = true,
                     SameSite = SameSiteMode.None,
-                    Domain = ".erickthamara.com",
+                    //Domain = ".erickthamara.com",
                     Expires = DateTime.UtcNow.AddDays(7)
                 };
 
                 Response.Cookies.Append("jwt_token", response.JWTToken ?? "", jwtCookieOptions);
                 Response.Cookies.Append("refresh_token", response.RefreshToken ?? "", refreshCookieOptions);
+
+                _logger.LogInformation("Cookies set: jwt_token, refresh_token");
 
                 // Return only user data (not tokens)
                 var loginResponse = new
@@ -131,8 +139,7 @@ namespace WhiteListing_Backend.Controllers
             }
             else
             {
-                //ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                //return View(model);
+                _logger.LogWarning("Invalid login attempt for email: {Email}", request.Email);
                 return BadRequest("Inavlid Email or Password");
             }
         }
@@ -151,6 +158,8 @@ namespace WhiteListing_Backend.Controllers
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh(RefreshTokenRequetsDTO request)
         {
+
+            _logger.LogInformation("Refresh endpoint hit");
             var refreshToken = Request.Cookies["refresh_token"];
             if (string.IsNullOrEmpty(refreshToken))
                 return Unauthorized("No refresh token found");
@@ -169,6 +178,7 @@ namespace WhiteListing_Backend.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
+                //Domain = ".erickthamara.com",
                 Expires = DateTime.UtcNow.AddMinutes(15)
             };
 
@@ -177,13 +187,16 @@ namespace WhiteListing_Backend.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Domain = ".erickthamara.com",
+                //Domain = ".erickthamara.com",
                 Expires = DateTime.UtcNow.AddDays(7)
             };
+            _logger.LogInformation("Ammending the tokens");
             Response.Cookies.Delete("jwt_token");
             Response.Cookies.Append("jwt_token", response.JWTToken!, accessOptions);
             Response.Cookies.Delete("refresh_token");
             Response.Cookies.Append("refresh_token", response.RefreshToken!, refreshOptions);
+
+            _logger.LogInformation("Tokens Refreshed");
 
             return Ok(new { message = "Tokens refreshed" });
         }
