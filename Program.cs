@@ -119,7 +119,7 @@ var myAllowedOrigins = "_WhitelistingApp";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: myAllowedOrigins,
-       policy => policy.WithOrigins("https://au-whitelisting-demo.erickthamara.com")
+       policy => policy.WithOrigins("https://au-whitelisting-demo.erickthamara.com", "https://localhost:4173")
        .WithMethods("PUT", "DELETE", "GET", "POST")
        .AllowAnyHeader()
        .AllowCredentials());

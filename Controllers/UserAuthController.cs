@@ -93,6 +93,7 @@ namespace WhiteListing_Backend.Controllers
                     Secure = true, // set to true in production (HTTPS only)
                     SameSite = SameSiteMode.None,
                     IsEssential = true, // Make sure the cookie is sent even if the user hasn't consented to non-essential cookies
+                    Domain = ".erickthamara.com",
                     Expires = DateTime.UtcNow.AddMinutes(15)
                 };
 
@@ -102,6 +103,7 @@ namespace WhiteListing_Backend.Controllers
                     Secure = true,
                     IsEssential = true,
                     SameSite = SameSiteMode.None,
+                    Domain = ".erickthamara.com",
                     Expires = DateTime.UtcNow.AddDays(7)
                 };
 
@@ -175,10 +177,12 @@ namespace WhiteListing_Backend.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
+                Domain = ".erickthamara.com",
                 Expires = DateTime.UtcNow.AddDays(7)
             };
-
+            Response.Cookies.Delete("jwt_token");
             Response.Cookies.Append("jwt_token", response.JWTToken!, accessOptions);
+            Response.Cookies.Delete("refresh_token");
             Response.Cookies.Append("refresh_token", response.RefreshToken!, refreshOptions);
 
             return Ok(new { message = "Tokens refreshed" });
@@ -193,7 +197,7 @@ namespace WhiteListing_Backend.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Lax,
+                SameSite = SameSiteMode.None,
                 Expires = DateTime.UtcNow.AddDays(-1) // Expire immediately
             };
 
