@@ -165,16 +165,16 @@ namespace WhiteListing_Backend.Controllers
             var accessOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
-                SameSite = SameSiteMode.Lax,
+                Secure = true,
+                SameSite = SameSiteMode.None,
                 Expires = DateTime.UtcNow.AddMinutes(15)
             };
 
             var refreshOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
-                SameSite = SameSiteMode.Lax,
+                Secure = true,
+                SameSite = SameSiteMode.None,
                 Expires = DateTime.UtcNow.AddDays(7)
             };
 
@@ -192,7 +192,7 @@ namespace WhiteListing_Backend.Controllers
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
+                Secure = true,
                 SameSite = SameSiteMode.Lax,
                 Expires = DateTime.UtcNow.AddDays(-1) // Expire immediately
             };
@@ -217,7 +217,6 @@ namespace WhiteListing_Backend.Controllers
         [HttpGet("CheckAuth")]
         public ActionResult<string> CheckIfSignedIn()
         {
-            Console.WriteLine("hit");
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {

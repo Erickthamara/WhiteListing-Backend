@@ -102,7 +102,6 @@ builder.Services.AddAuthentication(
             OnMessageReceived = context =>
             {
                 var jwtCookie = context.Request.Cookies["jwt_token"];
-                Console.WriteLine("JWT from cookie: " + jwtCookie);
                 if (!string.IsNullOrEmpty(jwtCookie))
                 {
                     context.Token = jwtCookie;
@@ -120,7 +119,7 @@ var myAllowedOrigins = "_WhitelistingApp";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: myAllowedOrigins,
-       policy => policy.WithOrigins("https://au-whitelisting-demo.erickthamara.com", "http://localhost:5173")
+       policy => policy.WithOrigins("https://au-whitelisting-demo.erickthamara.com")
        .WithMethods("PUT", "DELETE", "GET", "POST")
        .AllowAnyHeader()
        .AllowCredentials());
