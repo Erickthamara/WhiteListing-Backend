@@ -1,4 +1,4 @@
-using DotNetEnv;
+﻿using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -9,6 +9,7 @@ using TodoApi.Services;
 using WhiteListing_Backend.Identity;
 using WhiteListing_Backend.Models;
 using WhiteListing_Backend.Stores;
+using WhiteListing_Backend.SupabaseModels;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,6 +42,10 @@ builder.Services.AddScoped<Supabase.Client>(_ => new Supabase.Client(
          AutoConnectRealtime = true,
      }
     ));
+
+
+
+
 
 
 builder.Services.AddControllers();
@@ -119,7 +124,7 @@ var myAllowedOrigins = "_WhitelistingApp";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: myAllowedOrigins,
-       policy => policy.WithOrigins("https://au-whitelisting-demo.erickthamara.com", "https://localhost:4173")
+       policy => policy.WithOrigins("https://au-whitelisting-demo.erickthamara.com", "http://localhost:5116", "https://localhost:5173/")
        .WithMethods("PUT", "DELETE", "GET", "POST")
        .AllowAnyHeader()
        .AllowCredentials());
@@ -130,6 +135,25 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+//Test Supabase connection
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var supabase = scope.ServiceProvider.GetRequiredService<Supabase.Client>();
+
+        // Actually test the connection by making a simple query
+        await supabase.From<SupabaseUserModel>().Get();
+
+        app.Logger.LogInformation("✓ Supabase connection verified successfully");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "✗ Failed to connect to Supabase");
+        throw;
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -137,7 +161,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-app.UseHttpsRedirection();
+
+//app.UseHttpsRedirection();
 
 app.UseCors(myAllowedOrigins);
 app.UseAuthentication();

@@ -63,6 +63,7 @@ namespace WhiteListing_Backend.Controllers
         [HttpPost("Login")]
         public async Task<ActionResult<LoginResponse>> Login(LoginModel request)
         {
+            Console.WriteLine("Login endpoint hit");
             _logger.LogInformation("Login attempt for email: {Email}", request.Email);
 
             // Check incoming cookies
@@ -140,7 +141,7 @@ namespace WhiteListing_Backend.Controllers
             else
             {
                 _logger.LogWarning("Invalid login attempt for email: {Email}", request.Email);
-                return BadRequest("Inavlid Email or Password");
+                return BadRequest("Invalid Email or Password");
             }
         }
 
