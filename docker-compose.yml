@@ -1,5 +1,5 @@
 ﻿services:
-  whitelisting-backend:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
