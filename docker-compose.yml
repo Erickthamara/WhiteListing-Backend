@@ -1,0 +1,22 @@
+﻿services:
+  whitelisting-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8080"
+    environment:
+      - SUPABASE_URL=http://supabase-kong:8000
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - JWT_Issuer=${JWT_Issuer}
+      - JWT_Token=${JWT_Token}
+      - JWT_Audience=${JWT_Audience}
+    networks:
+      - coolify
+      - d4o8gssg4css4sko4cgo404g
+
+networks:
+  coolify:
+    external: true
+  d4o8gssg4css4sko4cgo404g:
+    external: true
