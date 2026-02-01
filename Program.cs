@@ -150,7 +150,7 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "✗ Failed to connect to Supabase");
-        throw;
+        //throw;
     }
 }
 
